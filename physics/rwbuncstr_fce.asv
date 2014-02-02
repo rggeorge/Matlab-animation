@@ -1,0 +1,66 @@
+function force = rwbuncstr_fce(P,q,whichleg)
+
+p = 4;
+c = 1e5;
+lambda = 1e5;
+eps = 1;
+
+g =981; %cm/s^2
+force_due_to_gravity = [0; -P.totalmass*g; 0];
+
+al = P.alpha;
+r = P.totalr;
+
+x = q(1);
+xdot = q(2);
+z = q(3);
+zdot = q(4);
+thdot = q(6);
+
+k=1;
+base_th = q(5);
+if numel(whichleg)>0
+    foot_normal_force = P.totalmass*g/(sin(al)*numel(whichleg));
+end
+
+for n = whichleg
+    %spring force
+    th = base_th + (n-1)*2*pi/P.nlegs;
+
+    v = -(x-r*sin(th))*sin(al) - (z-r*cos(th))*cos(al);
+    vdot = -(xdot-r*cos(th)*thdot)*sin(al) - (zdot+r*sin(th)*thdot)*cos(al);
+    udot =  (xdot-r*cos(th)*thdot)*cos(al) - (zdot+r*sin(th)*thdot)*sin(al);
+    
+    theta_normal = [-cos(th); sin(th)];
+    xz_normal = [sin(th); cos(th)];
+    
+    mag_springforce = ((v+eps)^p)*(c + lambda*vdot);
+    vector_springforce = mag_addlforce*[sin(P.alpha); cos(P.alpha)];
+    
+    springforce_theta = dot(theta_normal, vector_addlforce)*r;
+    springforce_xz = dot(xz_normal, vector_addlforce)*xz_normal;
+    foot_norm_force(:,n) = [normforce_xz(1)  normforce_xz(2)  normforce_theta]';
+    
+    %friction force
+    %
+    mu_k = 10; %coefficient of kinetic friction
+    vel_cont = 2e2;
+    
+    mag_fricforce = mu_k*foot_normal_force*v + udot*vel_cont;
+    vector_fricforce = mag_fricforce*[-cos(P.alpha); sin(P.alpha)];
+    
+    fricforce_theta = dot(theta_normal, vector_fricforce)*r;
+    fricforce_xz = dot(xz_normal, vector_fricforce)*xz_normal;
+
+    foot_fric_force(:,n) = [fricforce_xz(1)  fricforce_xz(2) fricforce_theta]';
+
+    k=k+1;
+end
+
+if numel(whichleg) == 0
+    addl_force = zeros(3,1);
+else 
+    addl_force = sum(foot_norm_force, 2)+  sum(foot_fric_force, 2);
+end
+
+force = force_due_to_gravity + addl_force;

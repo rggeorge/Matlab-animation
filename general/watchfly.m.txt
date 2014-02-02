@@ -1,0 +1,139 @@
+try
+rays = 0; %ray option
+lr = line([0 0], [0 0], [0 0]); ll= line([0 0], [0 0], [0 0]);
+% if rays = 1
+%    lr = line([RE_cent(1) fly_coords(1)], [RE_cent(2) fly_coords(2)],...
+%             [RE_cent(3) fly_coords(3)]);
+%    ll = line([LE_cent(1) fly_coords(1)], [LE_cent(2) fly_coords(2)],...
+%             [LE_cent(3) fly_coords(3)]);
+% end
+pose(Skull, eye(4));
+pose(Mandible, eye(4));
+pose(RightI, eye(4));
+pose(LeftI, eye(4));
+%create window
+w_plane = 3; %y-value for the window
+window_vertices = [4 w_plane -3  ;4 w_plane 3  ;-4 w_plane -3  ;-4 w_plane 3 ];
+window_faces = [1 2 3; 2 3 4];
+window_color = [0.7490    0.8000    0.9333];
+window = patch('faces', window_faces, 'vertices', window_vertices, ...
+'facecolor', window_color);
+
+set(window, 'FaceAlpha', .2);
+set(window, 'EdgeAlpha', 0);
+
+axis([-4 4 -4 4 -4 4])
+campos([10.0749   26.4250    8.4118])
+ skull_cent = vert_center(cube1); 
+
+ 
+ fly = makecube(.01);
+ rigidbody(fly)
+ 
+ old_s_phi = 0;
+ old_s_theta = 0;
+
+ user_entry = [];
+ display('Click on the window to set the fly or press any button to quit')
+ k = waitforbuttonpress;
+     inout = get(gca, 'CurrentPoint');
+     ratio = (w_plane - inout(1,2))/(inout(2,2)-inout(1,2));
+     fx_coord = (inout(2,1)-inout(1,1))*ratio + inout(1,1);
+     fz_coord = (inout(2,3)-inout(1,3))*ratio + inout(1,3);
+     
+ while k==0
+ 
+ pose(fly, r4([],[fx_coord w_plane fz_coord]));
+ fly_coords = vert_center(fly);
+ 
+ eye_cent = (vert_center(RightI)+vert_center(LeftI))/2;
+ s_theta = atan((fly_coords(3)-eye_cent(3))/(fly_coords(2)-eye_cent(2)));
+ s_theta = -s_theta*.8;
+ s_phi =atan((-fly_coords(1)+skull_cent(1))/(fly_coords(2)-skull_cent(2)));
+ 
+ max_mand_rot = (old_s_theta - s_theta)*.2; 
+
+ for dt = 0:.03:1
+     fly_coords = fly_coords +.1*[rand-.5 0 rand-.5];
+     %eye_mvmt = dt^(1/3);
+     mand_mvmt = exp(-((dt-.5).^2)/.1);
+     skull_mvmt = dt^1/3;
+     
+     pose(fly, r4([],[fly_coords(1) w_plane fly_coords(3)]));
+     target_coords = fly_coords;
+     lookat(RightI, target_coords);
+     lookat(LeftI, target_coords);
+if dt>.9
+    dt;
+end
+     if rays == 1
+
+     delete(rline)
+     delete(lline)
+     RE_cent = vert_center(RightI);
+     LE_cent = vert_center(LeftI);
+     rx = [RE_cent(1) target_coords(1)];
+     ry = [RE_cent(2) target_coords(2)];
+     rz = [RE_cent(3) target_coords(3)];
+     lx = [LE_cent(1) target_coords(1)];
+     ly = [LE_cent(2) target_coords(2)];
+     lz = [LE_cent(3) target_coords(3)];
+     
+     rline = line(rx, ry, rz);
+     lline = line(lx, ly, lz);
+     end
+     
+     mand_rot_angle = max_mand_rot*mand_mvmt;
+     if mand_rot_angle < 0 
+         mand_rot_angle = 0;
+     end
+pose(Mandible, r4([0 mand_rot_angle 0]));
+pose(Skull, r4([old_s_phi*(1-skull_mvmt)+s_phi*skull_mvmt  ...
+        old_s_theta*(1-skull_mvmt)+s_theta*skull_mvmt  0]));
+ drawnow;
+  end 
+ oldpt = get(gca, 'CurrentPoint');
+ 
+ flag = 0;
+ while flag == 0
+    fly_coords = fly_coords +.1*[(rand(1,2)-.5) 0];
+    pose(fly, r4([],[fly_coords(1) w_plane fly_coords(2)]));
+    lookat(RightI, fly_coords);
+    lookat(LeftI, fly_coords);
+ inout = get(gca, 'CurrentPoint');
+ if any(any(inout ~= oldpt))
+     ratio = (w_plane - inout(1,2))/(inout(2,2)-inout(1,2));
+     fx_coord = (inout(2,1)-inout(1,1))*ratio + inout(1,1);
+     fz_coord = (inout(2,3)-inout(1,3))*ratio + inout(1,3); 
+     flag = 1;
+ end
+     
+     
+ end
+   
+ old_s_theta = s_theta;
+ old_s_phi = s_phi;
+ old_RE_phi = RE_phi;
+ old_RE_theta = RE_theta;
+ old_LE_phi = LE_phi;
+ old_LE_theta = LE_theta;
+ end
+ delete(fly)
+ delete(window)
+ delete(ll)
+ delete(lr)
+ pose(Skull, eye(4));
+pose(Mandible, eye(4));
+pose(RightI, eye(4));
+pose(LeftI, eye(4));
+catch
+ delete(fly)
+ delete(window)
+ delete(ll)
+ delete(lr)
+ pose(Skull, eye(4));
+pose(Mandible, eye(4));
+pose(RightI, eye(4));
+pose(LeftI, eye(4));
+lasterr
+end

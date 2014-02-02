@@ -1,0 +1,12 @@
+function handles = makerw(P)
+
+figure(1)
+clf
+
+disc = pointystick('length', P.discth, 'radius', P.discr, 'material', 'aluminium');
+pose(disc, r4([0 0 0],[P.discth/2 0 0]))
+
+
+pose(leg, r4([0 pi/2 0], [0 0 0]))
+
+

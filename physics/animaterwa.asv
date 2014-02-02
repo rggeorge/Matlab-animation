@@ -1,0 +1,76 @@
+function thsoln = animaterwa()
+%params
+P.alpha = pi/9;
+
+P.discr = 2.5; %cm
+P.discth = 1; %cm
+P.discmat = 'aluminum';
+P.discprop = material(P.discmat);
+P.discmass = P.discprop.density*(pi*(P.discr^2)*P.discth);
+
+P.legr = .5;
+P.legl = 10;
+P.legmat = 'aluminum';
+P.legprop = material(P.legmat);
+P.legmass = P.legprop.density*(pi*(P.legr^2)*P.legl);
+P.nlegs = 6;
+
+P.conel = 1;
+P.conemass = P.legprop.density*(pi*(P.legr^2)*P.conel/3);
+
+P.totalmass = P.discmass + P.nlegs*(P.legmass + P.conemass);
+P.totalr = P.discr + P.legl; %distance from center of wheel to cone tip
+
+P.initialc = [pi/30; 0];
+P.time = 5;
+[soln impact_times] = rwa(P);
+
+%piece together solution
+dt = .05;
+cur_time = 0;
+total_time = P.time;
+k = 1; %keeps track of which 'chunk' of solution we are on
+
+while cur_time < total_time + dt; %while the solution is incomplete
+    
+    %find what the last time multiple of dt is in this solution chunk
+    lastt = floor((soln{k}.x(end)/(dt)))*dt; 
+    
+    %truncate current time to 7 decimal places to avoid bugs
+    cur_time = round((1e7)*cur_time)/(1e7);
+    
+    %form time lattice for this solution chunk
+    cur_int = cur_time : dt : lastt;
+    
+    if numel(cur_int)>0 %if the current chunk has relevant information
+        
+        %add the current solution chunk's solution lattice onto the matrix
+        %of solution vectors
+        thsoln(1:2,round(cur_int/dt + 1)) = deval(soln{k},cur_int);
+        
+        cur_time = cur_int(end) + dt;  %update current time
+    end
+    k = k + 1; %advance counter
+end
+
+i = 1; %counter records current frame 
+tic
+
+ywheelcent = 0;
+ywheeltranslate = 2*P.totalr*sin(pi/P.nlegs)*cos(P.alpha);
+zwheelcent = 0;
+beta = pi/P.nlegs;
+nevents = 0;
+for t = 0:dt:total_time
+    
+    current_time = toc;
+    while current_time < t %while simluation time is ahead of real time
+        current_time = toc; %update real time and wait
+    end
+    
+    pose(disc, r4([-thsoln(i) 0 0], [0 ywheelcent zwheelcent]))
+    
+    if 
+    drawnow;
+    i = i+1;
+end

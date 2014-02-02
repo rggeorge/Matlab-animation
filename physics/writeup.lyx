@@ -1,0 +1,655 @@
+#LyX 1.5.6 created this file. For more info see http://www.lyx.org/
+\lyxformat 276
+\begin_document
+\begin_header
+\textclass article
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\paperfontsize default
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+COMO 401 Assignment Four: Automated 4D Kinematics
+\end_layout
+
+\begin_layout Author
+Ryan George
+\end_layout
+
+\begin_layout Date
+June 21, 2009
+\end_layout
+
+\begin_layout Section*
+Running Instructions
+\end_layout
+
+\begin_layout Standard
+The script
+\family typewriter
+ animatedp
+\family default
+ animates a double pendulum.
+ The pendulum is described by the state variables 
+\begin_inset Formula $\theta$
+\end_inset
+
+, the angle between the first rod and the 
+\begin_inset Formula $z$
+\end_inset
+
+-axis, and 
+\begin_inset Formula $\phi$
+\end_inset
+
+, the angle between the first and second rods .
+ Inputs are initial conditions 
+\begin_inset Formula $\begin{pmatrix}\theta_{0}\\
+\theta'_{0}\\
+\phi_{0}\\
+\phi'_{0}\end{pmatrix}$
+\end_inset
+
+, simulation time, rod lengths 
+\begin_inset Formula $\begin{pmatrix}r_{1}\\
+r_{2}\end{pmatrix}$
+\end_inset
+
+, and masses 
+\begin_inset Formula $\begin{pmatrix}m_{1}\\
+m_{2}\end{pmatrix}$
+\end_inset
+
+.
+ To change wheel parameters, edit the first few lines of the script.
+ To adjust secondary parameters (rod radius, etc.), edit the first few lines
+ of 
+\family typewriter
+makedp
+\family default
+.
+\end_layout
+
+\begin_layout Section*
+Explanation of Parts
+\end_layout
+
+\begin_layout Section*
+1.
+\end_layout
+
+\begin_layout Subsection*
+(a).
+ Moment of Inertia
+\end_layout
+
+\begin_layout Standard
+The moment of inertia 
+\begin_inset Formula $I_{foot}$
+\end_inset
+
+ of the rimless wheel about the tip of one its feet was calculated in the
+ following way.
+ First, the rotational inertia of the disc about its center was calculated
+ with the formula 
+\begin_inset Formula $I_{disc}=\frac{mr^{2}}{2}$
+\end_inset
+
+.
+ Next, the rotational inertia of one leg about its center of mass was calculated
+ with the formula 
+\begin_inset Formula $I_{leg}=\frac{1}{12}m\left(3r^{2}+h^{2}\right)$
+\end_inset
+
+.
+ The parallel axis theorem, which states that 
+\begin_inset Formula $I_{new}=I_{center}+mr^{2}$
+\end_inset
+
+, we can find the rotational inertia of the leg about the disc's center
+ when the leg is attached.
+ In the same way, the rotational inertia of the cone about its off-axis
+ is 
+\begin_inset Formula $\frac{3}{5}m\left(\frac{r^{2}}{4}+h^{2}\right)$
+\end_inset
+
+, which we then shift to the be expressed from the wheel's center.
+ We add the rotational inertia about the wheel's center due to one leg and
+ one cone, then multiply that by the number of legs.
+ This gives us an expression for the rotational inertia of the rimless wheel
+ about its center (of mass).
+ Using the parallel axis theorem once more allows us to find the rotational
+ inertia of the rimless wheel about one of its feet.
+\end_layout
+
+\begin_layout Subsection*
+(b).
+ Equations of Motion
+\end_layout
+
+\begin_layout Standard
+The equations of motion for this system come from the Euler-Lagrange equations.
+ The expression for the wheel's kinetic energy is 
+\begin_inset Formula $T=\frac{1}{2}I\dot{\theta}^{2}$
+\end_inset
+
+, and the expression for the potential energy is 
+\begin_inset Formula $V=mg\mathrm{cos}(\theta)$
+\end_inset
+
+, where 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the angle that the leg on the groud makes with the vertical (z-axis).
+ We then take the Lagrangian 
+\begin_inset Formula $L=T-V$
+\end_inset
+
+ and substitute into the Euler-Lagrange equation:
+\begin_inset Formula \[
+\frac{d}{dt}\left(\frac{\partial L}{\partial\dot{\theta}}\right)-\frac{\partial L}{\partial\theta}=0\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Simplifying this expression gives the equation of motion 
+\begin_inset Formula $\ddot{\theta}-\frac{mgr}{I}\mathrm{sin}(\theta)=0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection*
+
+\family typewriter
+\series medium
+rwa.m
+\end_layout
+
+\begin_layout Standard
+The function 
+\family typewriter
+rwa
+\family default
+ numerically approximates the solution to the differential equation of motion
+ described above using 
+\family typewriter
+ode45
+\family default
+.
+ An event function detects when the next leg hits the ground.
+ When this happens, the post-impact angular velocity is recalculated.
+ The calculation for this uses the assumption that the collision is fully
+ plastic.
+ Hence the wheel loses all momentum normal to the constraint surface.
+ At the instant just before the collision, the angular momentum about the
+ wheel's center of mass is 
+\begin_inset Formula $\Omega_{center}^{-}=I_{center}\dot{\theta_{0}^{-}}$
+\end_inset
+
+.
+ The angular momentum of the wheel about foot 
+\begin_inset Formula $h$
+\end_inset
+
+, which is about to hit the ground, is 
+\begin_inset Formula $\Omega_{foot}^{-}=I_{center}\dot{\theta_{center}^{-}}+MR^{2}\dot{\theta_{foot}^{-}=\left(I_{center}+MR^{2}\mathrm{cos}\left(2\beta\right)\right)\dot{\theta_{0}^{-}}}$
+\end_inset
+
+ by the parallel axis theorem.
+ The instant just after the collision, the angular momentum about foot 
+\begin_inset Formula $h$
+\end_inset
+
+ is 
+\begin_inset Formula $\Omega_{1}^{+}=I_{foot}\dot{\theta}_{1}^{+}$
+\end_inset
+
+.
+\begin_inset Formula $ $
+\end_inset
+
+ Conservation of angular momentum gives 
+\begin_inset Formula \[
+\dot{\theta_{}}^{+}=\frac{I_{center}+mr^{2}\mathrm{cos}(2\beta)}{I_{foot}}\dot{\theta}^{-}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+(d).
+ Periodic Gait
+\end_layout
+
+\begin_layout Standard
+To analytically calulate the anticipated pre-step angular velocity 
+\begin_inset Formula $\dot{\theta}^{-}$
+\end_inset
+
+ we must first calculate the change in potential energy from one step to
+ the next.
+ Since 
+\begin_inset Formula $V=mgh$
+\end_inset
+
+, so 
+\begin_inset Formula $\Delta V=\Delta mgh=mg(\Delta h)$
+\end_inset
+
+.
+ Drawing a picture gives the trigonometry necessary to find the difference
+ along the z-axis from one step to the next.
+\begin_inset Formula \[
+\]
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename illustration.jpg
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We can see that 
+\begin_inset Formula $\Delta h=2r\mathrm{\, sin(\beta)\, sin(\alpha)}$
+\end_inset
+
+.
+ Thus the change in potential energy is 
+\begin_inset Formula $\Delta(mgh)=mg(\Delta h)$
+\end_inset
+
+.
+ Numerically, we have 
+\begin_inset Formula \[
+mg(\Delta h)=mg2r\mathrm{\, sin(\beta)\, sin(\alpha)}=184.5\times981\times2\times12.5\,\mathrm{sin}\left(\frac{\pi}{6}\right)\mathrm{sin}\left(\frac{\pi}{9}\right)\approx7.74\times10^{5}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The loss of potential energy, 
+\begin_inset Formula $mg(\Delta h)$
+\end_inset
+
+, should be equal to the kinetic energy gained, 
+\begin_inset Formula $\Delta T=\Delta\frac{1}{2}I_{foot}\dot{\theta}^{2}=\frac{1}{2}I_{foot}\left(\Delta\left(\dot{\theta}^{2}\right)\right)$
+\end_inset
+
+.
+ Thus 
+\begin_inset Formula \[
+\Delta\dot{\theta}^{2}=\dot{\left(\theta^{+}\right)}^{2}-\dot{\left(\theta^{-}\right)}^{2}=\frac{mg(\Delta h)}{\frac{1}{2}I_{foot}}=\frac{mg2r\mathrm{\, sin(\beta)\, sin(\alpha)}}{\frac{1}{2}I_{foot}}\approx\frac{171.8\times981\times2(12.5)\left(.5\right)\left(.342\right)}{\frac{1}{2}\left(3.41\times10^{4}\right)}\approx42.3\left(\mathrm{rad/s}\right)\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Running 
+\family typewriter
+animaterwa
+\family default
+ for 10 seconds and analyzing the last 20 of 53 impacts gave mean values
+ of 
+\begin_inset Formula $\dot{\theta}^{+}=7.96$
+\end_inset
+
+ and 
+\begin_inset Formula $\dot{\theta}^{-}=4.91\mathrm{rad/s}$
+\end_inset
+
+.
+ This gives a mean value of 
+\begin_inset Formula $\dot{\left(\theta^{+}\right)}^{2}-\dot{\left(\theta^{-}\right)}^{2}=39.25\left(\mathrm{rad/s}\right)$
+\end_inset
+
+.
+ This matches the anticipated result of 42.3 rad/s with decent accuracy (7.2%
+ error).
+\end_layout
+
+\begin_layout Section*
+2.
+\end_layout
+
+\begin_layout Standard
+The second simulated wheel uses the generalized coordinates 
+\begin_inset Formula $x$
+\end_inset
+
+, 
+\begin_inset Formula $y$
+\end_inset
+
+, and 
+\begin_inset Formula $\theta$
+\end_inset
+
+.
+ The pair 
+\begin_inset Formula $(x,y)$
+\end_inset
+
+ is the location of the center of the wheel, and the value 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the angle of the first foot with the horizontal.
+ The origin 
+\begin_inset Formula $(0,0)$
+\end_inset
+
+ is on the constraint surface.
+ This simulation uses 
+\family typewriter
+genodefcn
+\family default
+ from assignment 2 in order to solve the equations of motion.
+ No impacts are recorded, but rather the foot-ground interactions are modelled
+ with a spring-like rebound force.
+ The script 
+\family typewriter
+rwbco
+\family default
+ trivially identifies which, if any, feet are 'below' the ground.
+ This information is then passed to the script 
+\family typewriter
+rwbcnstr_fce
+\family default
+ to calculate the resulting constraint force.
+\end_layout
+
+\begin_layout Subsection*
+Unconstrained Force
+\end_layout
+
+\begin_layout Standard
+The first component of the unconstrained force on the system is gravity.
+ This acts with magnitude 
+\begin_inset Formula $mg$
+\end_inset
+
+ in the 
+\begin_inset Formula $-y$
+\end_inset
+
+ direction.
+ After this, a compliant contact model is used to model foot-ground interaction
+ perpendicular to the ground.
+ We assign 
+\begin_inset Formula $v$
+\end_inset
+
+ to be the distance from the tip of the foot to the constraint surface along
+ the constraint perpendicular, where below the surface is positive.
+ The magnitude of the force on the foot in the 
+\begin_inset Formula $-v$
+\end_inset
+
+ direction ('up' from the surface) is given as:
+\begin_inset Formula \[
+F_{v}=v^{n}(k+\lambda\dot{v})\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $n$
+\end_inset
+
+, 
+\begin_inset Formula $k$
+\end_inset
+
+, and 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ are adjustment parameters.
+ To express this force in terms of the state variables, we break it up into
+ components parallel and perpendicular to the current leg.
+ The perpendicular component 
+\begin_inset Formula $F_{\perp}$
+\end_inset
+
+ contributes to the torque as 
+\begin_inset Formula $\tau=F_{\perp}r$
+\end_inset
+
+.
+ The parallel component 
+\begin_inset Formula $F_{\parallel}$
+\end_inset
+
+ makes up the combined translational force, being split up as 
+\begin_inset Formula $F_{x}=F_{\parallel}\mathrm{sin(\theta)}$
+\end_inset
+
+ and 
+\begin_inset Formula $F_{y}=F_{\parallel}\mathrm{cos(\theta)}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+In addition, a friction force is employed.
+ The form of the force is:
+\begin_inset Formula \[
+F_{d}=\mu_{k}F_{v}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\mu_{k}$
+\end_inset
+
+ is the coefficient of kinetic friction and 
+\begin_inset Formula $F_{v}$
+\end_inset
+
+ is the normal force acting on the foot, which is the spring force.
+ This force acts parallel to the constraint surface and in opposition to
+ movement.
+ It is vectorized in the same way as for 
+\begin_inset Formula $F_{v}$
+\end_inset
+
+ to give its components in the 
+\begin_inset Formula $x$
+\end_inset
+
+, 
+\begin_inset Formula $y$
+\end_inset
+
+, and 
+\begin_inset Formula $\theta$
+\end_inset
+
+ dimensions.
+\end_layout
+
+\begin_layout Standard
+Adding these forces with gravity (
+\begin_inset Formula $y$
+\end_inset
+
+-direction) gives the total unconstrained force.
+\end_layout
+
+\begin_layout Subsection*
+Constraint Force
+\end_layout
+
+\begin_layout Standard
+Gauss' method is used to determine the constraint force that will give this
+ resultant force.
+ In order to use Gauss' method, we must be able to write the constraint
+ in the form 
+\begin_inset Formula $A\ddot{q}=b$
+\end_inset
+
+.
+ To do this, alternate coordinates were used.
+ The coordinates 
+\begin_inset Formula $(x_{h},y_{h})$
+\end_inset
+
+ refer to the cartesian location of the tip of the foot 
+\begin_inset Formula $h$
+\end_inset
+
+ currently being held by the constraint.
+ Thus 
+\begin_inset Formula $(x_{h},y_{h})=(x-r\mathrm{sin}(\theta_{h}),y-r\mathrm{cos}(\theta_{h}))$
+\end_inset
+
+.
+ Secondly the coordinate 
+\begin_inset Formula $u$
+\end_inset
+
+ is introduced, where 
+\begin_inset Formula $u$
+\end_inset
+
+ is the distance along the slope/constraint.
+ Note that for 
+\begin_inset Formula $u$
+\end_inset
+
+ is perpendicular to the 'depth' coordinate 
+\begin_inset Formula $v$
+\end_inset
+
+.
+ For simplicity, 
+\begin_inset Formula $u=0$
+\end_inset
+
+ coincides with the origin.
+ Thus the 
+\begin_inset Formula $u$
+\end_inset
+
+ value of a pair of 
+\begin_inset Formula $(x_{h},y_{h})$
+\end_inset
+
+ values is 
+\begin_inset Formula \[
+u=x_{h}\mathrm{cos}(\alpha)-y_{h}\mathrm{sin}(\alpha)=(x-r\mathrm{sin}(\theta_{h}))\mathrm{cos}(\alpha)-(y-r\mathrm{cos}(\theta_{h}))\mathrm{sin}(\alpha)\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+diffrentiating twice gives
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\dot{u}=(\dot{x}-r\mathrm{cos}(\theta_{h})\dot{\theta_{h}})\mathrm{cos}(\alpha)-(\dot{y}+r\mathrm{sin}(\theta_{h})\dot{\theta_{h}})\mathrm{sin}(\alpha)\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\ddot{u}=(\ddot{x}+r\mathrm{sin}(\theta_{h})\dot{\theta_{h}}^{2}-r\mathrm{cos}(\theta_{h})\ddot{\theta_{h}})\mathrm{cos}(\alpha)-(\ddot{y}+r\mathrm{cos}(\theta_{h})\dot{\theta_{h}}^{2}+r\mathrm{sin}(\theta_{h})\ddot{\theta_{h}})\mathrm{sin}(\alpha)\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We want the constrain 
+\begin_inset Formula $\dot{u}=0$
+\end_inset
+
+, and thus 
+\begin_inset Formula $\ddot{u}=0$
+\end_inset
+
+.
+ In matrix form 
+\begin_inset Formula $A\ddot{q}=b$
+\end_inset
+
+,
+\begin_inset Formula \[
+\begin{pmatrix}\mathrm{cos}(\alpha) & -\mathrm{sin}(\alpha) & -r\left(\mathrm{cos}(\theta_{h})\mathrm{cos}(\alpha)+\mathrm{sin}(\theta_{h})\mathrm{sin}(\alpha)\right)\end{pmatrix}\begin{pmatrix}\ddot{x}\\
+\ddot{y}\\
+\ddot{\theta}\end{pmatrix}=\begin{pmatrix}-r\dot{\theta_{h}}^{2}\left(\mathrm{sin}(\theta_{h})\mathrm{cos}(\alpha)-\mathrm{cos}(\theta_{h})\mathrm{sin}(\alpha)\right)\end{pmatrix}\]
+
+\end_inset
+
+
+\begin_inset Formula \[
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

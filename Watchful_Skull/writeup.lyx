@@ -1,0 +1,517 @@
+#LyX 1.5.6 created this file. For more info see http://www.lyx.org/
+\lyxformat 276
+\begin_document
+\begin_header
+\textclass article
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\paperfontsize default
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+COMO 401 Assignment One: Kinematics of Rigid Body Linkages & 3D Visualization
+\end_layout
+
+\begin_layout Author
+Ryan George
+\end_layout
+
+\begin_layout Date
+April 22, 2009
+\end_layout
+
+\begin_layout Subsection*
+Running Instructions
+\end_layout
+
+\begin_layout Standard
+Two main scripts perform the action of the application.
+ The script ‘
+\family typewriter
+setup.m
+\family default
+’, which sets up the skull, should be run first.
+ After setup.m is run, use the function ‘
+\family typewriter
+pose.m
+\family default
+’ to move the skull and its various components around.
+ A typical call of the pose function is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+pose(object, r4([psi phi theta], [x y z]), object_two)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $ $
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This call rotates specified object by angles psi, phi, and theta in relation
+ to object_two and translates its center to [x y z] is object_two’s reference
+ frame.
+ If no second object is specified, rotation and translation are done in
+ the object’s parent frame.
+\end_layout
+
+\begin_layout Standard
+Next run the script '
+\family typewriter
+watchfly.m
+\family default
+'.
+ A window will appear in front of the skull, and the command window will
+ ask whether you would like rays to trace along the eyes' axes as is moves.
+ Click on the window to place a fly at that spot.
+ The skull will turn to watch the fly and continue to track it with its
+ eyes.
+ After the skull and jaw have completed their movement, you can click again
+ to re-set the fly, and the skull will again turn towards it.
+ When you wish to quit the script, click the red square on the lower-right
+ hand of the window.
+ The script 
+\family typewriter
+watchfly.m 
+\family default
+can be run any time after 
+\family typewriter
+setup.m 
+\family default
+has been run.
+\end_layout
+
+\begin_layout Subsection*
+Explanation of Scripts
+\end_layout
+
+\begin_layout Subsection*
+
+\family typewriter
+\series medium
+setup.m
+\end_layout
+
+\begin_layout Standard
+The script 
+\family typewriter
+setup.m
+\family default
+ first creates the objects using '
+\family typewriter
+asc2fig.m
+\family default
+', which reads an ascii file exported from Experient Creator.
+ It makes them rigid bodies with '
+\family typewriter
+rigidbody.m
+\family default
+' by resetting its vertices in a posable form and creating the fields 'parent',
+ 'child', and 'pose'.
+ Objects are then connected with '
+\family typewriter
+assign_child.m
+\family default
+', which assigns the child to the parent and the parent to the child.
+ In addition, the child's vertices are recalculated to be in the parent's
+ reference frame using '
+\family typewriter
+pose.m
+\family default
+'.
+ The objects are placed in a heirarchy with 'outer' objects lower down on
+ the tree.
+ For example, the object 'lower teeth' has the mandible as its parent, which
+ has a dummy object as its parent, which has the skull as its parent.
+ Dummy objects are placed at the base of the skull, on the mandible's axis
+ of rotation, and at the center of each eye.
+ These dummy objects serve as a pivot point for their children objects.
+ Objects are given appropriate positions using 
+\family typewriter
+pose.m.
+
+\family default
+ Object colors and camera options are also set.
+ 
+\end_layout
+
+\begin_layout Subsection*
+
+\family typewriter
+\series medium
+pose.m
+\end_layout
+
+\begin_layout Standard
+All movement is done using the function 
+\family typewriter
+pose.m
+\family default
+.
+ The foundation of the 
+\family typewriter
+pose
+\family default
+ function is the pose matrix.
+ A pose matrix takes the form: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\begin{pmatrix}\begin{pmatrix}\mathrm{3x3}\\
+\mathrm{rotation}\\
+\mathrm{matrix}\end{pmatrix} & \begin{pmatrix}x\\
+y\\
+z\end{pmatrix}\\
+0\quad0\quad0 & 1\end{pmatrix}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The vector 
+\begin_inset Formula $\begin{pmatrix}x\\
+y\\
+z\end{pmatrix}$
+\end_inset
+
+ is the coordinate position relative to the reference frame.
+ The 3x3 rotation matrix is the composition of rotation matrices of x-z-x
+ Euler angles.
+ This corresponds to rotating by 
+\begin_inset Formula $\psi$
+\end_inset
+
+ about the x-axis, then by 
+\begin_inset Formula $\phi$
+\end_inset
+
+ about the z-axis, then by 
+\begin_inset Formula $\theta$
+\end_inset
+
+ about the x-axis:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\]
+
+\end_inset
+
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\noun off
+\color none
+
+\begin_inset Formula \[
+\begin{pmatrix}\mathrm{3x3}\\
+\mathrm{rotation}\\
+\mathrm{matrix}\end{pmatrix}=\begin{pmatrix}\cos\psi & -\sin\psi & 0\\
+\sin\psi & \cos\psi & 0\\
+0 & 0 & 1\end{pmatrix}\begin{pmatrix}1 & 0 & 0\\
+0 & \cos\phi & -\sin\phi\\
+0 & \sin\phi & \cos\phi\end{pmatrix}\begin{pmatrix}\cos\theta & -\sin\theta & 0\\
+\sin\theta & \cos\theta & 0\\
+0 & 0 & 1\end{pmatrix}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A pose matrix specifies orientation and translation in a certain reference
+ frame.
+ If we associate a reference frame with each object, pose matrices describe
+ where one reference frame is in relation to another.
+ A pose matrix is then a map between two reference frames.
+ Matrices can be composed so that we can arbitrarily move from one reference
+ frame to another with only the pose matrices that describe their relation
+ to another.
+ The pose composition rule is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\mathrm{P_{a,c}}=\mathrm{P_{a,b}P_{b,c}}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\mathrm{P_{a,c}}$
+\end_inset
+
+ is the pose of 'c' in the reference frame of 'a'.
+ 
+\end_layout
+
+\begin_layout Standard
+Within this toolbox, an object's pose in relation to its parent is the only
+ pose stored.
+ One of the functions of 
+\family typewriter
+pose.m
+\family default
+ is to find an object's pose in relation to other reference frames.
+ We can find an object's pose relative to the world by tracing back through
+ the parent heirarchy:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\mathrm{P_{world,object}}=\mathrm{P_{world,a}P_{a,b}...P_{x,parent}P_{parent,object}}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This ensures that we can calculate the pose between two arbitrary objects.
+ To calculate the pose of object 'z' in relation to object 'x', we use:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\mathrm{P_{x,z}}=\mathrm{P_{x,world}P_{world,z}}=\mathrm{P_{world,x}^{-1}P_{world,z}}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Vertices can also be tranformed by matrix multiplication:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\mathrm{v_{a}}=\mathrm{P_{a,c}v_{c}}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\mathrm{v_{a}}$
+\end_inset
+
+ is a set of vertices in the reference frame of 'a'.
+\end_layout
+
+\begin_layout Standard
+To render an object in MATLAB, we need its vertices expressed in the world
+ frame.
+ Since an object's vertices are stored in reference to its parent frame,
+ we can easily find its vertices expressed in the world frame:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula \[
+\mathrm{v_{world}}=\mathrm{P_{world,parent}v_{parent}}\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The established heirarchy of the objects gives an obvious direction in which
+ to perform pose compositions.
+ More centrally, when we change one object's pose, we can recalculate the
+ vertices of its children it to reflect the change.
+ Working recursively, we can reposition all objects that are below the original
+ object in the hierarchy to reflect the change.
+\end_layout
+
+\begin_layout Subsection*
+
+\family typewriter
+\series medium
+watchfly.m
+\end_layout
+
+\begin_layout Standard
+The animation in 
+\family typewriter
+watchfly.m
+\family default
+ begins with the user clicking the window.
+ Coordinates are gathered for where the user's line of sight at the click
+ enters and exits the axis area.
+ This information, together with the plane of the window, is sufficient
+ to calculate the fly's placement on the window.
+\end_layout
+
+\begin_layout Standard
+The movement of the skull and jaw happens in a defined interval, within
+ a 
+\family typewriter
+for 
+\family default
+loop.
+ The movement of the skull depends on where the skull was oriented at the
+ end of the last loop (where the fly last was) and where it needs to rotate
+ to (where the fly is currently).
+ Two coordinates are used, one for vertical rotation and one for horizontal
+ rotation.
+ Within the 
+\family typewriter
+for 
+\family default
+loop the skull moves smoothly from its old rotation coordinates to its new
+ rotation coordinates by weighting the old and new coordinates on a time-dependa
+nt equation.
+ The jaw moves in proportion only to a positive (upward) change in the skull's
+ orientation, and its movement is also governed by a time-dependant equation.
+\end_layout
+
+\begin_layout Standard
+The movement of the eyes depends largely upon the function '
+\family typewriter
+lookat.m
+\family default
+'.
+ This function rotates the z-axis of an object so that it goes through the
+ origin of another object.
+ This is done by first calculating the unit vector which points from the
+ first object to the second object.
+ 
+\family typewriter
+pose.m
+\family default
+ easily handles this.
+ Next, using '
+\family typewriter
+findbasis3.m
+\family default
+', we find any two complimentary vectors which together with the first form
+ an orthonormal basis for 
+\series bold
+
+\begin_inset Formula $\mathbf{R^{\mathrm{3}}}$
+\end_inset
+
+
+\series default
+.
+ These three vectors make a 3x3 rotation matrix.
+ Putting the original unit vector into the third column aligns the z-axis
+ in the desired direction.
+ Since the eye is rotationally symmetrical about the z-axis, the directions
+ of the x- and y-vectors don't matter, but they must all be perpendicular
+ to avoid deformation.
+\end_layout
+
+\begin_layout Standard
+When the skull and jaw are in motion during the 
+\family typewriter
+for
+\family default
+ loop, the eyes follow a dummy object.
+ This object starts where the eyes were formerly looking, but it quickly
+ moves toward the fly to imitate the natural behavior of looking with the
+ eyes before turning the head.
+ This approach is governed by a time-dependant equation.
+ Well before the jaw and mandible have completed their movement the dummy
+ object's distance from the fly is negligible.
+ When the 
+\family typewriter
+for
+\family default
+ loop terminates, the script enters a 
+\family typewriter
+while
+\family default
+ loop.
+ In this loop the eyes track the fly directly until the user clicks again
+ to reset the fly.
+\end_layout
+
+\begin_layout Standard
+The entirety of the animation is contained in an overarching 
+\family typewriter
+while
+\family default
+ loop.
+ This loop is broken from when the user clicks on the red square in the
+ window.
+ When this happens the objects created in 
+\family typewriter
+watchfly.m
+\family default
+ are deleted.
+\end_layout
+
+\begin_layout Standard
+The 'rays' option uses the function 
+\family typewriter
+drawray.m
+\family default
+ to draw a line along each eye's z-axis.
+ This is done simply by drawing a line from the center of the eye to the
+ center of the object that it is looking at according to the function 
+\family typewriter
+lookat.m
+\family default
+.
+\end_layout
+
+\end_body
+\end_document

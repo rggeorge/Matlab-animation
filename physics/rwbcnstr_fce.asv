@@ -1,0 +1,67 @@
+function constr_force = rwbcnstr_fce(P,q, whichleg,t)
+% dpuf calculates the constraint force for the compound pendulum
+% animated by animatedp. This force represents the string tension which
+% pulls on mass1 when the string is fully stretched out.
+% Inputs are data structure P and state variables q.
+%
+% Ryan George
+% COMO 401, Assignment Two
+
+n = 2;
+k = 1;
+lambda = 1e2;
+eps = .7;
+
+al = P.alpha;
+r = P.totalr;
+
+x = q(1);
+xdot = q(2);
+z = q(3);
+zdot = q(4);
+th = q(5);
+thdot = q(6);
+
+M = P.mass_mtx; %mass matrix
+F = rwbuncstr_fce(P,q); %unconstrained force
+
+k=0;
+base_th = q(5);
+
+for n = whichleg
+
+    th = base_th + (n-1)*2*pi/P.nlegs;
+    
+    %u =  (x-r*sin(th))*cos(al) - (z-r*cos(th))*sin(al);
+    %udot = (xdot-r*cos(th)*thdot)*cos(al) -(zdot+r*sin(th)*thdot)*sin(al);
+    
+    
+    v = -(x-r*sin(th))*sin(al) - (z-r*cos(th))*cos(al)
+    vdot = -(xdot-r*cos(th)*thdot)*sin(al) - (zdot+r*sin(th)*thdot)*cos(al)
+    if t>0.185636488656483
+        t;
+    end
+    %LHS of matrix constraint equation  A(q'') = b
+    A(2*k+1:2*k+2,:) = [ cos(al)  -sin(al)  -r*(cos(th)*cos(al)+sin(th)*sin(al));
+                        -sin(al)  -cos(al)   r*(cos(th)*sin(al)-sin(th)*cos(al))];
+
+    %RHS of equation A(q'') == b
+    b(2*k+1) = -r*(thdot^2)*(sin(th)*cos(al)-cos(th)*sin(al));
+    
+    b(2*k+2) = r*(thdot^2)*(sin(th)*sin(al)+cos(th)*cos(al))...
+              + (1/P.totalmass)*((v+eps)^n)*(k+lambda*vdot);
+    
+    b=b(:);
+%     b(2i+2) = r*(-sin(th)*(thdot^2)*sin(al)-cos(th)*(thdot^2)*cos(al))...
+%            +(1/P.totalmass)*(((x-r*sin(th))*sin(al)+(z-r*cos(th)*cos(al)) )^n)*...
+%             (k + lambda*((xdot+r*cos(th)*thdot)*sin(al)+(zdot-r*sin(th)*thdot)*cos(al)));
+ 
+k=k+1;
+end
+
+if numel(whichleg) == 0
+    constr_force = zeros(6,1);
+else
+    %Expression calculated using Gauss' method
+    constr_force = sqrtm(M)*pinv(A/sqrtm(M))*(b-A*(M\F));
+end

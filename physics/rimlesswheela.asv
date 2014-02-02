@@ -1,0 +1,23 @@
+function rimlesswheela()
+
+P.discr = 2.5; %cm
+P.discth = 1; %cm
+P.discmat = 'aluminum';
+P.discprop = material(discmat);
+P.discmass = discprop.density*(pi*(discr^2)*discth);
+
+P.legr = 1;
+P.legl = 10;
+P.legmat = 'aluminum';
+P.legprop = material(legmat);
+P.legmass = legprop.density*(pi*(legr^2)*legl);
+P.nlegs = 6;
+
+P.conel = 1;
+P.conemass = legprop.density*(pi*(legr^2)*conel/3);
+
+P.totalmass = discmass + nlegs*(legmass + conemass);
+P.totalr = dircr + legl + conel; %distance from center of wheel to cone tip
+
+
+genodefcn(P, rwinertia, unconstrfce_fcn, constrfce_fcn, normal_fcn, impact_fcn, co_fcn)

@@ -1,0 +1,17 @@
+function leg = front(whichleg)
+%function leg = front(whichleg)
+%
+%Finds the leg that should be constrained in accordance w/ rwb
+switch numel(whichleg)
+    
+case 0
+    leg = 0
+    
+case 1
+    leg = whichleg
+
+case 2
+    if whichleg(:) == [2; 1]
+        leg = 1
+    else
+        leg = max(whichleg);

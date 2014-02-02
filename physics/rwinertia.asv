@@ -1,0 +1,35 @@
+function inertia_about_tip = rwinertia()
+%function inertia_about_tip = rwinertia()
+
+discr = 2.5; %cm
+discth = 1; %cm
+discmat = 'aluminum';
+discprop = material(discmat);
+discmass = discprop.density*(pi*(discr^2)*discth);
+
+legr = 1;
+legl = 10;
+legmat = 'aluminum';
+legprop = material(legmat);
+legmass = legprop.density*(pi*(legr^2)*legl);
+nlegs = 6;
+
+conel = 1;
+conemass = legprop.density*(pi*(legr^2)*conel/3);
+
+totalmass = discmass + nlegs*(legmass + conemass);
+
+discinertia = discmass*(discr^2)/2;
+
+leginertia = legmass*(3*legr^2 + legl^2)/12;
+
+coneinertia = (3/5)*conemass*((legr^2)/4 + conel^2);
+
+dist2move_leginertia = discr + legl/2;
+dist2move_coneinertia = dircr + legl + conel;
+
+inertia_about_center = discinertia + ...
+    nlegs*( (leginertia + legmass * dist2move_leginertia^2) +...
+            (coneinertia + conemass * dist2move_coneinertia^2));
+        
+inertia_about_tip = inertia_about_center + totalmass * dist2move_coneinertia^2;

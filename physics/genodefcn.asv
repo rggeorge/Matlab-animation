@@ -1,0 +1,114 @@
+ function soln = genodefcn(P, massmtx_fcn, unconstrfce_fcn, constrfce_fcn, normal_fcn, impact_fcn, co_fcn)
+%soln = genodefcn(P, massmtx_fcn, unconstrfce_fcn, constrfce_fcn, normal_fcn, impact_fcn, co_fcn)
+%
+% genodefcn is a generic ode function that solves a dynamical system.
+% The input is a structure P of parameters, and several function handles.
+% These functions are:
+% massmtx_fcn - calculates mass matrix from state variables
+% unconfce_fcn - caluculates unconstrained force on system
+% constrfce_fcn - calculates possible constraint force on system
+% normal_fcn - calculates the normal-to-constraint vector
+% impact_fcn - calculates state variables immediately after impact
+% co_fcn - determines whether, with the current state, the constraint is on
+%
+% The third function in this m-file, ode_eventfcn, must be set
+% specifically for the system at hand.
+%
+% Ryan George
+% COMO 401, Assignment Two
+
+%add function handles to P
+P.massmtx = massmtx_fcn;
+P.unconstrfce_fcn = unconstrfce_fcn;
+P.constrfce_fcn = constrfce_fcn;
+P.normal_fcn = normal_fcn;
+P.co_fcn = co_fcn;
+
+%set ode options, including event function
+options = odeset('RelTol', 1e-1, 'AbsTol', 1e-1, 'Events', @ode_eventfcn);
+
+%initialize time and initial conditions
+total_time = P.time;
+k = 1;
+cur_time = 0;
+initialc = P.initialc;
+
+%solve the next 'chunk' of solution; i.e. until event
+soln{k} = ode45(@genode, [cur_time  total_time], initialc, options, P);
+
+
+
+
+function qprime = genode(t, q, P)
+%function qprime = genode(t, q, P)
+%genode is a generic ode input/output function that returns values to ode45
+%or a similar solver.
+%
+%input:
+%q(2n + 1) represents q_(n-1)
+%q(2n) represents q'_n
+%
+%output:
+%qprime(2n + 1) represents q'_(n-1)
+%qprime(2n) represents q''_n
+
+[state whichleg] = P.co_fcn(P, q);
+%whichleg =1;
+%calculate uncontstrained force and constrained force
+if t>.65
+    yy = 0;
+end
+unconstr_force = P.unconstrfce_fcn(P, q, whichleg);
+
+constr_force = P.constrfce_fcn(P, q, whichleg,t);
+
+%constr_force= zeros(3,1);
+%set up qprime vector
+qprime = zeros(size(q));
+%shift q' values into qprime(1:2:end)
+qprime(1:2:end) = q(2:2:end);
+
+
+
+global curleg
+curleg = front(whichleg);
+
+if state %if constraint force is on
+    %acceleration = inverse (mass matrix) * (total force)
+    qprime(2:2:end) = P.massmtx(P, q)\(unconstr_force + constr_force); 
+    
+else %if constraint force is off
+    %acceleration = inverse (mass matrix) * (total force)
+    qprime(2:2:end) = P.massmtx(P, q)\(unconstr_force);
+end
+
+al = P.alpha;
+r = P.totalr;
+th = q(5) + (curleg-1)*2*pi/P.nlegs;
+udoubledot = (qprime(2)+r*sin(th)*(q(6)^2)-r*cos(th)*qprime(6))*cos(al)...
+            -(qprime(4)+r*cos(th)*(q(6)^2)+r*sin(th)*qprime(6))*sin(al);
+if abs(sum(udoubledot))>1 && numel(udoubledot)==1
+    t
+    udoubledot
+end
+
+function [value  isterminal  direction] = ode_eventfcn(t,q,P)
+% function [value  isterminal  direction] = ode_eventfcn(t,q,P)
+%
+% ode_eventfcn is an event function that tells ode45 in genode_fcn.m when
+% to cease.  This event function is NOT generic; the expressions for 'value'
+% and 'direction' must be set specifically for the system at hand.
+
+%value is how far mass 1 is from pulling the string taught; 
+%i.e. how close to the circle
+global lastleg
+
+% [state whichleg] = P.co_fcn(P, q);
+% if numel(whichleg)==1
+%     value(1) = 2*(lastleg == front(whichleg)); 
+% else
+%     value(1) = 1;
+% end
+value(1)=1;
+isterminal(1) = 1;
+direction(1) = 0;
